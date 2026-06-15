@@ -1,0 +1,5 @@
+### Obtener todas las órdenes
+GET http://localhost:5218/api/orders
+
+### Obtener orden por ID
+GET http://localhost:5218/api/orders/1
