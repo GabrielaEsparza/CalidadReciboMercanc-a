@@ -4,4 +4,11 @@ public class Contenedor
 {
     public int Id { get; set; }
     public string NumeroContenedor { get; set; } = string.Empty;
+
+    public DateTime? FechaLlegada { get; set; }
+
+    public EstadoContenedor Estado {get; set;}
+
+
+
 }
