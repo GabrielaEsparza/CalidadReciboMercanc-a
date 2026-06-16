@@ -2,7 +2,7 @@ using Dapper;
 using System.Data.Odbc;
 using DotNetEnv;
 
-DotNetEnv.Env.Load("../../.env");
+DotNetEnv.Env.Load("./env");
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();

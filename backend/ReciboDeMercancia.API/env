@@ -1,0 +1,24 @@
+# Archivo .env
+DB_HOST=localhost
+DB_USER=root
+# Acteck895$
+# Acteck46782%
+DB_PASSWORD=Passw0rd1
+DB_NAME=order_database
+
+FLASK_SECRET_KEY=tu_secreto
+JWT_SECRET_KEY=clave_acceso_secreta
+JWT_REFRESH_SECRET_KEY=clave_refresh_secreta
+TOKEN_ENCRYPT_KEY=gKjFikfuUZpD6Ui8whh1a0pG5ZRiKwP_KZ_KIfpbqqY=
+
+# ERP pruebas = 192.168.0.60
+# ERP servidor = 192.168.0.151
+ERP_HOST=192.168.0.60
+ERP_USER=sa
+ERP_PASSWORD=895KPQ1
+ERP_NAME=Acteck
+# Trabajo
+#DB_HOST=192.168.0.60
+#DB_USER=sa
+#DB_PASSWORD=895SKPQ1
+#DB_NAME=Acteck
