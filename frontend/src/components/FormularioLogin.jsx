@@ -1,6 +1,8 @@
 import { useState } from "react";
 
-function FormularioLogin() {
+
+  // 1. Asegúrate de poner "onLoginSuccess" aquí arriba entre las llaves del componente:
+function FormularioLogin({ onLoginSuccess }) { 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -8,7 +10,16 @@ function FormularioLogin() {
   const iniciarSesion = (e) => {
     e.preventDefault();
     console.log({ username, password });
+    
+    if (username === "admin" && password === "admin123") {
+      // 2. Quitamos el window.location viejo y llamamos a la función de éxito:
+      onLoginSuccess(); 
+    } else {
+      alert("Usuario o contraseña incorrectos");
+    }
   };
+
+  // ... (todo lo demás de tu return se queda exactamente igual)
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center"
