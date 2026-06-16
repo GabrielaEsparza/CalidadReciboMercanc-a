@@ -1,14 +1,20 @@
-import FormularioLogin from "./components/FormlarioLogin";
+import { useState } from "react";
+import FormularioLogin from "./components/FormularioLogin"; 
+import Inicio from "./pages/Inicio"; 
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <FormularioLogin />
-      
-    </div>
+    <>
+      {isLoggedIn ? (
+        <Inicio />
+      ) : (
+        /* Quitamos las clases de aquí para que no peleen con el componente */
+        <FormularioLogin onLoginSuccess={() => setIsLoggedIn(true)} />
+      )}
+    </>
   );
 }
 
 export default App;
-
-
