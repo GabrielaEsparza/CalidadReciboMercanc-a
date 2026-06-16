@@ -12,7 +12,7 @@ public class EntradaDeImportacion
     public DateTime? Fecha { get; set; }
 
      //FK hacia Contenedor
-    public int IdContenedor { get; set; }
+    public string NumeroContenedor  { get; set; } = string.Empty;
     public Contenedor Contenedor { get; set; } = null!;
 
 
