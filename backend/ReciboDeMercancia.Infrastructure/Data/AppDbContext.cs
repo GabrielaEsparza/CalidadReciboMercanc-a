@@ -20,111 +20,119 @@ public class AppDbContext : DbContext
     public DbSet<ValidacionCaja> ValidacionesCaja => Set<ValidacionCaja>();
     public DbSet<Incidencia> Incidencias => Set<Incidencia>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        // EntradaDeImportacion → Contenedor
-        modelBuilder.Entity<EntradaDeImportacion>()
-            .HasOne(e => e.Contenedor)
-            .WithMany()
-            .HasForeignKey(e => e.NumeroContenedor)  // antes era ContenedorId
-            .OnDelete(DeleteBehavior.Restrict);
+   protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // PK de Contenedor es NumeroContenedor
+    modelBuilder.Entity<Contenedor>()
+        .HasKey(c => c.NumeroContenedor);
 
-        // EntradaDeImportacionDetalle → EntradaDeImportacion
-        modelBuilder.Entity<EntradaDeImportacionDetalle>()
-            .HasOne(d => d.EntradaDeImportacion)
-            .WithMany(e => e.Detalles)
-            .HasForeignKey(d => d.EntradaDeImportacionId)
-            .OnDelete(DeleteBehavior.Cascade);
+    // PK de OrdenDeCompra es NumeroDeOrden
+    modelBuilder.Entity<OrdenDeCompra>()
+        .HasKey(o => o.NumeroDeOrden);
 
-        // EntradaDeImportacionDetalle → Product
-        modelBuilder.Entity<EntradaDeImportacionDetalle>()
-            .HasOne(d => d.Product)
-            .WithMany()
-            .HasForeignKey(d => d.ProductId)
-            .OnDelete(DeleteBehavior.Restrict);
+    // EntradaDeImportacion → Contenedor
+    modelBuilder.Entity<EntradaDeImportacion>()
+        .HasOne(e => e.Contenedor)
+        .WithMany()
+        .HasForeignKey(e => e.NumeroContenedor)
+        .OnDelete(DeleteBehavior.Restrict);
 
-        // OrdenDeCompra → Contenedor
-        modelBuilder.Entity<OrdenDeCompra>()
-            .HasOne(o => o.Contenedor)
-            .WithMany(c => c.OrdenesDeCompra)
-            .HasForeignKey(o => o.ContenedorId)
-            .OnDelete(DeleteBehavior.Restrict);
+    // EntradaDeImportacionDetalle → EntradaDeImportacion
+    modelBuilder.Entity<EntradaDeImportacionDetalle>()
+        .HasOne(d => d.EntradaDeImportacion)
+        .WithMany(e => e.Detalles)
+        .HasForeignKey(d => d.EntradaDeImportacionId)
+        .OnDelete(DeleteBehavior.Cascade);
 
-        // OrdenDeCompraDetalle → OrdenDeCompra
-        modelBuilder.Entity<OrdenDeCompraDetalle>()
-            .HasOne(d => d.OrdenDeCompra)
-            .WithMany(o => o.Detalles)
-            .HasForeignKey(d => d.NumeroDeOrden)  // cambia OrdenDeCompraId por NumeroDeOrden
-            .OnDelete(DeleteBehavior.Cascade);
+    // EntradaDeImportacionDetalle → Product
+    modelBuilder.Entity<EntradaDeImportacionDetalle>()
+        .HasOne(d => d.Product)
+        .WithMany()
+        .HasForeignKey(d => d.ProductId)
+        .OnDelete(DeleteBehavior.Restrict);
 
-        // OrdenDeCompraDetalle → Product
-        modelBuilder.Entity<OrdenDeCompraDetalle>()
-            .HasOne(d => d.Product)
-            .WithMany()
-            .HasForeignKey(d => d.ProductId)
-            .OnDelete(DeleteBehavior.Restrict);
+    // OrdenDeCompra → Contenedor
+    modelBuilder.Entity<OrdenDeCompra>()
+        .HasOne(o => o.Contenedor)
+        .WithMany(c => c.OrdenesDeCompra)
+        .HasForeignKey(o => o.NumeroContenedor)
+        .OnDelete(DeleteBehavior.Restrict);
 
-        // Recepcion → Contenedor
-        modelBuilder.Entity<Recepcion>()
-            .HasOne(r => r.Contenedor)
-            .WithOne(c => c.Recepcion)
-            .HasForeignKey<Recepcion>(r => r.ContenedorId)
-            .OnDelete(DeleteBehavior.Restrict);
+    // OrdenDeCompraDetalle → OrdenDeCompra
+    modelBuilder.Entity<OrdenDeCompraDetalle>()
+        .HasOne(d => d.OrdenDeCompra)
+        .WithMany(o => o.Detalles)
+        .HasForeignKey(d => d.NumeroDeOrden)
+        .OnDelete(DeleteBehavior.Cascade);
 
-        // Recepcion → OperadorQC
-        modelBuilder.Entity<Recepcion>()
-            .HasOne(r => r.OperadorQC)
-            .WithMany()
-            .HasForeignKey(r => r.OperadorQCId)
-            .OnDelete(DeleteBehavior.Restrict);
+    // OrdenDeCompraDetalle → Product
+    modelBuilder.Entity<OrdenDeCompraDetalle>()
+        .HasOne(d => d.Product)
+        .WithMany()
+        .HasForeignKey(d => d.ProductId)
+        .OnDelete(DeleteBehavior.Restrict);
 
-        // RecepcionOperador → Recepcion
-        modelBuilder.Entity<RecepcionOperador>()
-            .HasOne(ro => ro.Recepcion)
-            .WithMany(r => r.Operadores)
-            .HasForeignKey(ro => ro.RecepcionId)
-            .OnDelete(DeleteBehavior.Cascade);
+    // Recepcion → Contenedor
+    modelBuilder.Entity<Recepcion>()
+        .HasOne(r => r.Contenedor)
+        .WithOne(c => c.Recepcion)
+        .HasForeignKey<Recepcion>(r => r.NumeroContenedor)
+        .OnDelete(DeleteBehavior.Restrict);
 
-        // RecepcionOperador → Operador
-        modelBuilder.Entity<RecepcionOperador>()
-            .HasOne(ro => ro.Operador)
-            .WithMany()
-            .HasForeignKey(ro => ro.OperadorId)
-            .OnDelete(DeleteBehavior.Restrict);
+    // Recepcion → OperadorQC
+    modelBuilder.Entity<Recepcion>()
+        .HasOne(r => r.OperadorQC)
+        .WithMany()
+        .HasForeignKey(r => r.OperadorQCId)
+        .OnDelete(DeleteBehavior.Restrict);
 
-        // RecepcionDetalle → Recepcion
-        modelBuilder.Entity<RecepcionDetalle>()
-            .HasOne(d => d.Recepcion)
-            .WithMany(r => r.Detalles)
-            .HasForeignKey(d => d.RecepcionId)
-            .OnDelete(DeleteBehavior.Cascade);
+    // RecepcionOperador → Recepcion
+    modelBuilder.Entity<RecepcionOperador>()
+        .HasOne(ro => ro.Recepcion)
+        .WithMany(r => r.Operadores)
+        .HasForeignKey(ro => ro.RecepcionId)
+        .OnDelete(DeleteBehavior.Cascade);
 
-        // RecepcionDetalle → Product
-        modelBuilder.Entity<RecepcionDetalle>()
-            .HasOne(d => d.Product)
-            .WithMany()
-            .HasForeignKey(d => d.ProductId)
-            .OnDelete(DeleteBehavior.Restrict);
+    // RecepcionOperador → Operador
+    modelBuilder.Entity<RecepcionOperador>()
+        .HasOne(ro => ro.Operador)
+        .WithMany()
+        .HasForeignKey(ro => ro.OperadorId)
+        .OnDelete(DeleteBehavior.Restrict);
 
-        // ValidacionCaja → RecepcionDetalle
-        modelBuilder.Entity<ValidacionCaja>()
-            .HasOne(v => v.RecepcionDetalle)
-            .WithOne(d => d.ValidacionCaja)
-            .HasForeignKey<ValidacionCaja>(v => v.RecepcionDetalleId)
-            .OnDelete(DeleteBehavior.Cascade);
+    // RecepcionDetalle → Recepcion
+    modelBuilder.Entity<RecepcionDetalle>()
+        .HasOne(d => d.Recepcion)
+        .WithMany(r => r.Detalles)
+        .HasForeignKey(d => d.RecepcionId)
+        .OnDelete(DeleteBehavior.Cascade);
 
-        // Incidencia → Recepcion
-        modelBuilder.Entity<Incidencia>()
-            .HasOne(i => i.Recepcion)
-            .WithMany(r => r.Incidencias)
-            .HasForeignKey(i => i.RecepcionId)
-            .OnDelete(DeleteBehavior.Cascade);
+    // RecepcionDetalle → Product
+    modelBuilder.Entity<RecepcionDetalle>()
+        .HasOne(d => d.Product)
+        .WithMany()
+        .HasForeignKey(d => d.ProductId)
+        .OnDelete(DeleteBehavior.Restrict);
 
-        // Incidencia → Product
-        modelBuilder.Entity<Incidencia>()
-            .HasOne(i => i.Product)
-            .WithMany()
-            .HasForeignKey(i => i.ProductId)
-            .OnDelete(DeleteBehavior.Restrict);
-    }
+    // ValidacionCaja → RecepcionDetalle
+    modelBuilder.Entity<ValidacionCaja>()
+        .HasOne(v => v.RecepcionDetalle)
+        .WithOne(d => d.ValidacionCaja)
+        .HasForeignKey<ValidacionCaja>(v => v.RecepcionDetalleId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+    // Incidencia → Recepcion
+    modelBuilder.Entity<Incidencia>()
+        .HasOne(i => i.Recepcion)
+        .WithMany(r => r.Incidencias)
+        .HasForeignKey(i => i.RecepcionId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+    // Incidencia → Product
+    modelBuilder.Entity<Incidencia>()
+        .HasOne(i => i.Product)
+        .WithMany()
+        .HasForeignKey(i => i.ProductId)
+        .OnDelete(DeleteBehavior.Restrict);
+}
 }

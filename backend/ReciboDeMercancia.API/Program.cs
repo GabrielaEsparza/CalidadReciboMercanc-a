@@ -1,11 +1,18 @@
 using Dapper;
 using System.Data.Odbc;
 using DotNetEnv;
+using Microsoft.EntityFrameworkCore;
+using ReciboDeMercancia.Infrastructure.Data;
 
 DotNetEnv.Env.Load("./env");
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
+
+// Configuración de MySQL con EF Core
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 var app = builder.Build();
 
@@ -24,8 +31,6 @@ app.MapGet("/entradas", () =>
         $"UID={Environment.GetEnvironmentVariable("ERP_USER")};" +
         $"PWD={Environment.GetEnvironmentVariable("ERP_PASSWORD")};" +
         $"Timeout=10;";
-
-
 
     using var conn = new OdbcConnection(connStr);
     var sql = """

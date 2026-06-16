@@ -8,7 +8,7 @@ public class Recepcion
     public EstadoRecepcion Estado { get; set; }
 
     // Qué contenedor llegó
-    public int ContenedorId { get; set; }
+    public string NumeroContenedor { get; set; } = string.Empty;
     public Contenedor Contenedor { get; set; } = null!;
 
     // Quién supervisó
