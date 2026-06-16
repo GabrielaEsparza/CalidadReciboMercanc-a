@@ -9,7 +9,6 @@ public class Contenedor
 
     // Órdenes de compra que vienen en este contenedor
     public ICollection<OrdenDeCompra> OrdenesDeCompra { get; set; } = new List<OrdenDeCompra>();
-
-    // Recepción asociada a este contenedor
     public Recepcion? Recepcion { get; set; }
+
 }
