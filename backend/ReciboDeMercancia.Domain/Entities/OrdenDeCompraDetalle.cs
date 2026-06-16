@@ -8,7 +8,7 @@ public class OrdenDeCompraDetalle
     public decimal Cantidad { get; set; }
 
     // A qué orden de compra pertenece
-    public int OrdenDeCompraId { get; set; }
+    public string NumeroDeOrden { get; set; }
     public OrdenDeCompra OrdenDeCompra { get; set; } = null!;
 
     // Qué producto es

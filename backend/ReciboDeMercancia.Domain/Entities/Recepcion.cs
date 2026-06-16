@@ -10,7 +10,7 @@ public class Recepcion
 
     //Qué contenedor llegó:
 
-    public int ContenedorId { get; set; }
+    public int NumeroContenedor { get; set; }
     public Contenedor Contenedor { get; set; } = null!;
 
     //Quién supervisó?
