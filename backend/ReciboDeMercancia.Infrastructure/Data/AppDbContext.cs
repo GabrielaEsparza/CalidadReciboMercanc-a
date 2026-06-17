@@ -27,6 +27,7 @@ public class AppDbContext : DbContext
             .HasOne(e => e.Contenedor)
             .WithMany()
             .HasForeignKey(e => e.NumeroContenedor)  // antes era ContenedorId
+            .HasPrincipalKey(c => c.NumeroContenedor) 
             .OnDelete(DeleteBehavior.Restrict);
 
         // EntradaDeImportacionDetalle → EntradaDeImportacion
@@ -55,6 +56,7 @@ public class AppDbContext : DbContext
             .HasOne(d => d.OrdenDeCompra)
             .WithMany(o => o.Detalles)
             .HasForeignKey(d => d.NumeroDeOrden)  // cambia OrdenDeCompraId por NumeroDeOrden
+            .HasPrincipalKey(o => o.NumeroDeOrden) 
             .OnDelete(DeleteBehavior.Cascade);
 
         // OrdenDeCompraDetalle → Product

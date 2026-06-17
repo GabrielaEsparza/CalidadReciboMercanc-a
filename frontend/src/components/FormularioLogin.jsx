@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { autenticar } from '../services/authentication'; // Ajusta la ruta a donde guardaste el 'export const autenticar'
 
 
   // 1. Asegúrate de poner "onLoginSuccess" aquí arriba entre las llaves del componente:
@@ -7,17 +8,36 @@ function FormularioLogin({ onLoginSuccess }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const iniciarSesion = (e) => {
+  // 1. Añadimos 'async' para poder esperar la respuesta de la red
+  const iniciarSesion = async (e) => {
     e.preventDefault();
-    console.log({ username, password });
     
-    if (username === "admin" && password === "admin123") {
-      // 2. Quitamos el window.location viejo y llamamos a la función de éxito:
-      onLoginSuccess(); 
-    } else {
-      alert("Usuario o contraseña incorrectos");
+    try {
+      // 2. Llamamos a tu servicio importado
+      // ¡OJO! Tu backend espera 'Name' y 'Password' con mayúsculas en el JSON.
+      // Modificamos el envío en el servicio o lo pasamos con el formato correcto:
+      const datosAutenticacion = await autenticar(username, password);
+      
+      // 3. Si el backend responde con éxito, guardamos el Token JWT
+      if (datosAutenticacion && datosAutenticacion.exito) {
+        
+        // Guardamos el token en el almacenamiento local del navegador para futuras consultas protegidas
+        localStorage.setItem("token", datosAutenticacion.token);
+        
+        // Llamamos a tu función de éxito para redirigir al usuario
+        onLoginSuccess(); 
+      } else {
+        // Por si el backend responde con un 200 pero con exito: false (o mensajes personalizados)
+        alert(datosAutenticacion.mensaje || "Usuario o contraseña incorrectos");
+      }
+
+    } catch (error) {
+      // 4. Si el backend responde con un 401 Unauthorized o 500, caerá aquí
+      console.error("Fallo el inicio de sesión:", error);
+      alert("Usuario o contraseña incorrectos o error de servidor");
     }
   };
+
 
   // ... (todo lo demás de tu return se queda exactamente igual)
 

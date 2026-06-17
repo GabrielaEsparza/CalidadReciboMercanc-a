@@ -8,7 +8,11 @@
  */
 export const autenticar = async (username, password) => {
   try {
-    const respuesta = await api.post('/authentication', { username, password });
+    // Cambiamos { username, password } por las llaves exactas del backend { Name, Password }
+    const respuesta = await api.post('/auth/login', { 
+      Name: username, 
+      Password: password 
+    });
     return respuesta.data;
   } catch (error) {
     console.error("Error en la autenticación:", error);

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://acteck-sistema.com', // aqui va la url real
+  baseURL: 'http://localhost:5000/api', // aqui va la url real
   headers: {
     'Content-Type': 'application/json',
   },
