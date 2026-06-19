@@ -20,11 +20,15 @@ public class AppDbContext : DbContext
     public DbSet<ValidacionCaja> ValidacionesCaja => Set<ValidacionCaja>();
     public DbSet<Incidencia> Incidencias => Set<Incidencia>();
 
-   protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    // PK de Contenedor es NumeroContenedor
-    modelBuilder.Entity<Contenedor>()
-        .HasKey(c => c.NumeroContenedor);
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // EntradaDeImportacion → Contenedor
+        modelBuilder.Entity<EntradaDeImportacion>()
+            .HasOne(e => e.Contenedor)
+            .WithMany()
+            .HasForeignKey(e => e.NumeroContenedor)  // antes era ContenedorId
+            .HasPrincipalKey(c => c.NumeroContenedor) 
+            .OnDelete(DeleteBehavior.Restrict);
 
     // PK de OrdenDeCompra es NumeroDeOrden
     modelBuilder.Entity<OrdenDeCompra>()
@@ -44,12 +48,13 @@ public class AppDbContext : DbContext
         .HasForeignKey(d => d.EntradaDeImportacionId)
         .OnDelete(DeleteBehavior.Cascade);
 
-    // EntradaDeImportacionDetalle → Product
-    modelBuilder.Entity<EntradaDeImportacionDetalle>()
-        .HasOne(d => d.Product)
-        .WithMany()
-        .HasForeignKey(d => d.ProductId)
-        .OnDelete(DeleteBehavior.Restrict);
+        // OrdenDeCompraDetalle → OrdenDeCompra
+        modelBuilder.Entity<OrdenDeCompraDetalle>()
+            .HasOne(d => d.OrdenDeCompra)
+            .WithMany(o => o.Detalles)
+            .HasForeignKey(d => d.NumeroDeOrden)  // cambia OrdenDeCompraId por NumeroDeOrden
+            .HasPrincipalKey(o => o.NumeroDeOrden) 
+            .OnDelete(DeleteBehavior.Cascade);
 
     // OrdenDeCompra → Contenedor
     modelBuilder.Entity<OrdenDeCompra>()

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ReciboDeMercancia.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ReciboDeMercancia.Infrastructure.Data;
 namespace ReciboDeMercancia.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260617161407_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,16 +27,11 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
 
             modelBuilder.Entity("ReciboDeMercancia.Domain.Entities.Contenedor", b =>
                 {
-<<<<<<< HEAD
-                    b.Property<string>("NumeroContenedor")
-                        .HasColumnType("varchar(255)");
-=======
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
->>>>>>> b968ca11570af6709885aa8d5507ec93423d6921
 
                     b.Property<int>("Estado")
                         .HasColumnType("int");
@@ -41,18 +39,11 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                     b.Property<DateTime?>("FechaLlegada")
                         .HasColumnType("datetime(6)");
 
-<<<<<<< HEAD
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.HasKey("NumeroContenedor");
-=======
                     b.Property<string>("NumeroContenedor")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
->>>>>>> b968ca11570af6709885aa8d5507ec93423d6921
 
                     b.ToTable("Contenedores");
                 });
@@ -172,12 +163,6 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
 
             modelBuilder.Entity("ReciboDeMercancia.Domain.Entities.OrdenDeCompra", b =>
                 {
-<<<<<<< HEAD
-                    b.Property<string>("NumeroDeOrden")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<int>("Id")
-=======
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
@@ -185,22 +170,12 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ContenedorId")
->>>>>>> b968ca11570af6709885aa8d5507ec93423d6921
                         .HasColumnType("int");
 
                     b.Property<string>("NombreProveedor")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-<<<<<<< HEAD
-                    b.Property<string>("NumeroContenedor")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.HasKey("NumeroDeOrden");
-
-                    b.HasIndex("NumeroContenedor");
-=======
                     b.Property<string>("NumeroDeOrden")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
@@ -208,7 +183,6 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ContenedorId");
->>>>>>> b968ca11570af6709885aa8d5507ec93423d6921
 
                     b.ToTable("OrdenesDeCompra");
                 });
@@ -284,12 +258,9 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-<<<<<<< HEAD
-=======
                     b.Property<int>("ContenedorId")
                         .HasColumnType("int");
 
->>>>>>> b968ca11570af6709885aa8d5507ec93423d6921
                     b.Property<int>("Estado")
                         .HasColumnType("int");
 
@@ -299,23 +270,12 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                     b.Property<DateTime>("FechaInicio")
                         .HasColumnType("datetime(6)");
 
-<<<<<<< HEAD
-                    b.Property<string>("NumeroContenedor")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-=======
->>>>>>> b968ca11570af6709885aa8d5507ec93423d6921
                     b.Property<int>("OperadorQCId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-<<<<<<< HEAD
-                    b.HasIndex("NumeroContenedor")
-=======
                     b.HasIndex("ContenedorId")
->>>>>>> b968ca11570af6709885aa8d5507ec93423d6921
                         .IsUnique();
 
                     b.HasIndex("OperadorQCId");
@@ -423,10 +383,7 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                     b.HasOne("ReciboDeMercancia.Domain.Entities.Contenedor", "Contenedor")
                         .WithMany()
                         .HasForeignKey("NumeroContenedor")
-<<<<<<< HEAD
-=======
                         .HasPrincipalKey("NumeroContenedor")
->>>>>>> b968ca11570af6709885aa8d5507ec93423d6921
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -475,11 +432,7 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                 {
                     b.HasOne("ReciboDeMercancia.Domain.Entities.Contenedor", "Contenedor")
                         .WithMany("OrdenesDeCompra")
-<<<<<<< HEAD
-                        .HasForeignKey("NumeroContenedor")
-=======
                         .HasForeignKey("ContenedorId")
->>>>>>> b968ca11570af6709885aa8d5507ec93423d6921
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -491,10 +444,7 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                     b.HasOne("ReciboDeMercancia.Domain.Entities.OrdenDeCompra", "OrdenDeCompra")
                         .WithMany("Detalles")
                         .HasForeignKey("NumeroDeOrden")
-<<<<<<< HEAD
-=======
                         .HasPrincipalKey("NumeroDeOrden")
->>>>>>> b968ca11570af6709885aa8d5507ec93423d6921
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -513,11 +463,7 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                 {
                     b.HasOne("ReciboDeMercancia.Domain.Entities.Contenedor", "Contenedor")
                         .WithOne("Recepcion")
-<<<<<<< HEAD
-                        .HasForeignKey("ReciboDeMercancia.Domain.Entities.Recepcion", "NumeroContenedor")
-=======
                         .HasForeignKey("ReciboDeMercancia.Domain.Entities.Recepcion", "ContenedorId")
->>>>>>> b968ca11570af6709885aa8d5507ec93423d6921
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
