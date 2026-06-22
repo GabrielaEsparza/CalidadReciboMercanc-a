@@ -1,5 +1,8 @@
-### Obtener todas las órdenes
-GET http://localhost:5218/api/orders
+### Obtener todas  
+GET http://localhost:5000/api/importacion/tablas_local
 
 ### Obtener orden por ID
-GET http://localhost:5218/api/orders/1
+GET http://localhost:5000/entradas
+
+### Obtener orden por ID
+POST http://localhost:5000/alterar

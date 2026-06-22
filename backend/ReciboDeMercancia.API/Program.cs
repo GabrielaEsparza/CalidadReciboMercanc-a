@@ -39,6 +39,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // 5. Inyección de dependencias para los servicios de Autenticación
 builder.Services.AddSingleton<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IImportacionService, ImportacionService>();
 
 var app = builder.Build();
 
@@ -52,7 +53,24 @@ app.UseCors("PermitirFrontend");
 
 // 7. Mapear las rutas de los controladores convencionales (Activa /api/auth/login)
 app.MapControllers();
+app.MapPost("/alterar", () =>
+{
+    var connStr = $"Server={Environment.GetEnvironmentVariable("DB_HOST")};" +
+                  $"Database=recibo_mercancia_db;" +
+                  $"User ID={Environment.GetEnvironmentVariable("DB_USER")};" +
+                  $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
+                  $"Port=3306;";
 
+    using var conn = new MySqlConnection(connStr);
+    var sql = """
+        ALTER TABLE entradasdeimportacion 
+        ADD Estatus VARCHAR(50) NOT NULL DEFAULT 'AFECTADO';
+    """;
+
+
+    var resultados = conn.Query(sql).ToList();
+    return Results.Ok(resultados);
+});
 // Endpoint GET /entradas (Tu motor rápido de Dapper para el ERP)
 app.MapGet("/entradas", () =>
 {
@@ -81,44 +99,14 @@ app.MapGet("/entradas", () =>
         AND c.Estatus NOT IN ('SINAFECTAR')
     """;
 
+
+
+    
+
     var resultados = conn.Query(sql).ToList();
     return Results.Ok(resultados);
 });
 
-
-app.MapGet("/tablas", () =>
-{
-    var connStr =
-        $"Driver={{SQL Server}};" +
-        $"Server={Environment.GetEnvironmentVariable("ERP_HOST")};" +
-        $"Database={Environment.GetEnvironmentVariable("ERP_NAME")};" +
-        $"UID={Environment.GetEnvironmentVariable("ERP_USER")};" +
-        $"PWD={Environment.GetEnvironmentVariable("ERP_PASSWORD")};" +
-        $"Timeout=10;";
-
-    using var conn = new OdbcConnection(connStr);
-    var tablas = conn.Query("SELECT name FROM sys.tables;");
-
-    return Results.Ok(tablas);
-});
-
-
-app.MapGet("/tablas_local", () =>
-{
-    // Cambiamos a la estructura de cadena de conexión nativa de MySQL
-    var connStr = 
-        $"Server={Environment.GetEnvironmentVariable("DB_HOST")};" +
-        $"Database=recibo_mercancia_db;" + // Pon el nombre directo para probar
-        //$"Database={Environment.GetEnvironmentVariable("DB_NAME_RECIBO")};" + // Nota: Python usa DB_NAME_RECIBO para conectar
-        $"User ID={Environment.GetEnvironmentVariable("DB_USER")};" +
-        $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
-        $"Port=3306;"; // Puerto por defecto de MySQL
-
-    using var conn = new MySqlConnection(connStr);
-    
-    // Usamos la consulta correcta para MySQL
-    var tablas = conn.Query("SELECT * FROM entradasdeimportacion;");    return Results.Ok(tablas);
-});
 
 
 app.MapPost("/importar_registro_erp", async () =>
@@ -151,7 +139,6 @@ app.MapPost("/importar_registro_erp", async () =>
         AND YEAR(C.FechaEmision) >= 2025
         AND c.Estatus NOT IN ('SINAFECTAR')
     """;
-
     try
     {
         using var erpConn = new OdbcConnection(erpConnStr);
@@ -209,16 +196,19 @@ app.MapPost("/importar_registro_erp", async () =>
                 };
 
                 await localConn.ExecuteAsync(sqlContenedor, paramContenedor, transaction: transaccion);
-
-                // Inserción en entradasdeimportacion
+                // 1. Inserción en entradasdeimportacion (Cabecera)
+                // Agregamos SELECT SCOPE_IDENTITY() para recuperar el ID generado automáticamente
                 var sqlEntrada = """
-                    INSERT INTO entradasdeimportacion (Situacion, Proveedor, OrdenCompra, Usuario, Fecha, NumeroContenedor)
-                    VALUES (@Situacion, @Proveedor, @OrdenCompra, @Usuario, @Fecha, @NumeroContenedor);
+                    INSERT INTO entradasdeimportacion (Situacion, Estatus, Proveedor, OrdenCompra, Usuario, Fecha, NumeroContenedor)
+                    VALUES (@Situacion, @Estatus, @Proveedor, @OrdenCompra, @Usuario, @Fecha, @NumeroContenedor);
+                    SELECT SCOPE_IDENTITY();
                 """;
 
+                // Agregamos el parámetro 'Estatus' que faltaba en tu objeto anónimo
                 var paramEntrada = new
                 {
                     Situacion = situacion,
+                    Estatus = "AFECTADO", // O la variable que contenga el estatus dinámico
                     Proveedor = proveedor,
                     OrdenCompra = (string)registro.origenid,
                     Usuario = "SYSTEM", 
@@ -226,7 +216,29 @@ app.MapPost("/importar_registro_erp", async () =>
                     NumeroContenedor = numeroContenedor
                 };
 
-                totalImportados += await localConn.ExecuteAsync(sqlEntrada, paramEntrada, transaction: transaccion);
+                // Ejecutamos la cabecera y obtenemos el ID generado
+                var entradaId = await localConn.QuerySingleAsync<int>(sqlEntrada, paramEntrada, transaction: transaccion);
+
+                // 2. Inserción en entradasdeimportaciondetalle (Detalle)
+                var sqlDetalle = """
+                    INSERT INTO entradasdeimportaciondetalle (Cantidad, EntradaDeImportacionId, ProductId)
+                    VALUES (@Cantidad, @EntradaDeImportacionId, @ProductId);
+                """;
+
+                // Mapeamos los datos del artículo que vienen en tu objeto 'registro' del ERP
+                // NOTA: Verifica que 'registro.Cantidad' y 'registro.Articulo' coincidan con las propiedades de tu objeto del ERP
+                var paramDetalle = new
+                {
+                    Cantidad = (decimal)registro.Cantidad,
+                    EntradaDeImportacionId = entradaId, // Usamos el ID obtenido en el paso anterior
+                    ProductId = (int)registro.Articulo // Asegúrate de que el código del artículo sea entero o adáptalo
+                };
+
+                // Ejecutamos la inserción del detalle
+                await localConn.ExecuteAsync(sqlDetalle, paramDetalle, transaction: transaccion);
+
+                // Sumamos 1 al contador de registros principales importados con éxito
+                totalImportados++;
             }
 
             await transaccion.CommitAsync();
@@ -242,8 +254,10 @@ app.MapPost("/importar_registro_erp", async () =>
     {
         return Results.Json(new { error = "Fallo interno en el proceso masivo", detalle = ex.Message }, statusCode: 500);
     }
+
 });
-// Endpoint temporal para dar de alta o actualizar al admin con el hash nativo
+
+
 app.MapPost("/api/auth/setup-admin", async (AppDbContext context, IPasswordService passwordService) =>
 {
     var adminExistente = await context.Operadores.FirstOrDefaultAsync(o => o.Name == "admin");
