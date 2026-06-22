@@ -5,4 +5,8 @@ GET http://localhost:5000/api/importacion/tablas_local
 GET http://localhost:5000/entradas
 
 ### Obtener orden por ID
-POST http://localhost:5000/alterar
+POST http://localhost:5000/importar_registro_erp
+
+
+###
+POST http://localhost:5000/poblar_catalogo_productos

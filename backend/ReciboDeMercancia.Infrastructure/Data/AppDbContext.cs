@@ -128,5 +128,26 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(i => i.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
+            
+        modelBuilder.Entity<Incidencia>()
+            .HasOne(i => i.Product)
+            .WithMany()
+            .HasForeignKey(i => i.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // =======================================================
+        // 👇 ESTO ES LO QUE FALTA: MAPEO DE NOMBRES EN MINÚSCULAS PARA MYSQL
+        // =======================================================
+        modelBuilder.Entity<EntradaDeImportacion>()
+            .ToTable("entradasdeimportacion");
+
+        modelBuilder.Entity<EntradaDeImportacionDetalle>()
+            .ToTable("entradasdeimportaciondetalles");
+
+        modelBuilder.Entity<Product>()
+            .ToTable("products");
+            
+        modelBuilder.Entity<Contenedor>()
+            .ToTable("contenedores");
     }
 }

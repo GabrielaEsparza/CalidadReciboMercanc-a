@@ -1,26 +1,29 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-using MySql.Data.MySqlClient; 
-using Dapper; 
+using Microsoft.EntityFrameworkCore;
+using ReciboDeMercancia.Domain.Entities; 
+using ReciboDeMercancia.Infrastructure.Data; 
 
 namespace ReciboDeMercancia.Application.Services;
 
 public class ImportacionService : IImportacionService
 {
-    public async Task<IEnumerable<dynamic>> ObtenerTablasLocalAsync()
-    {
-        var connStr = 
-            $"Server={Environment.GetEnvironmentVariable("DB_HOST")};" +
-            $"Database=recibo_mercancia_db;" + 
-            $"User ID={Environment.GetEnvironmentVariable("DB_USER")};" +
-            $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
-            $"Port=3306;";
+    private readonly AppDbContext _context;
 
-        using var conn = new MySqlConnection(connStr);
-        
-        var tablas = await conn.QueryAsync("SELECT * FROM entradasdeimportacion WHERE OrdenCompra = 'GDL3789';");
-        
-        return tablas;
+    public ImportacionService(AppDbContext context)
+    {
+        _context = context;
     }
+
+   public async Task<IEnumerable<EntradaDeImportacion>> ObtenerTablasLocalAsync()
+    {
+        // Al agregar .OrderByDescending(e => e.Id), los registros con ID 2494+ saldrán al principio
+        return await _context.EntradasDeImportacion
+            .Include(e => e.Detalles)
+            .OrderByDescending(e => e.Id) 
+            .ToListAsync();
+    }
+
 }
+
