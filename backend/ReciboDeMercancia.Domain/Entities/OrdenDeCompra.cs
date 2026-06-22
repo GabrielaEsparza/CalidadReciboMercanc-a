@@ -7,7 +7,7 @@ public class OrdenDeCompra
     public string NombreProveedor { get; set; } = string.Empty;
 
     // A qué contenedor pertenece esta orden
-    public string NumeroContenedor { get; set; } = string.Empty;
+    public int ContenedorId { get; set; }
     public Contenedor Contenedor { get; set; } = null!;
 
     // Productos que vienen en esta orden

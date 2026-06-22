@@ -26,7 +26,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<EntradaDeImportacion>()
             .HasOne(e => e.Contenedor)
             .WithMany()
-            .HasForeignKey(e => e.NumeroContenedor)  // antes era ContenedorId
+            .HasForeignKey(e => e.ContenedorId) 
             .HasPrincipalKey(c => c.NumeroContenedor) 
             .OnDelete(DeleteBehavior.Restrict);
 
@@ -38,7 +38,7 @@ public class AppDbContext : DbContext
     modelBuilder.Entity<EntradaDeImportacion>()
         .HasOne(e => e.Contenedor)
         .WithMany()
-        .HasForeignKey(e => e.NumeroContenedor)
+        .HasForeignKey(e => e.Contenedor)
         .OnDelete(DeleteBehavior.Restrict);
 
     // EntradaDeImportacionDetalle → EntradaDeImportacion
@@ -52,7 +52,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<OrdenDeCompraDetalle>()
             .HasOne(d => d.OrdenDeCompra)
             .WithMany(o => o.Detalles)
-            .HasForeignKey(d => d.NumeroDeOrden)  // cambia OrdenDeCompraId por NumeroDeOrden
+            .HasForeignKey(d => d.OrdenDeCompraId)  // cambia OrdenDeCompraId por NumeroDeOrden
             .HasPrincipalKey(o => o.NumeroDeOrden) 
             .OnDelete(DeleteBehavior.Cascade);
 
@@ -60,14 +60,14 @@ public class AppDbContext : DbContext
     modelBuilder.Entity<OrdenDeCompra>()
         .HasOne(o => o.Contenedor)
         .WithMany(c => c.OrdenesDeCompra)
-        .HasForeignKey(o => o.NumeroContenedor)
+        .HasForeignKey(o => o.ContenedorId)
         .OnDelete(DeleteBehavior.Restrict);
 
     // OrdenDeCompraDetalle → OrdenDeCompra
     modelBuilder.Entity<OrdenDeCompraDetalle>()
         .HasOne(d => d.OrdenDeCompra)
         .WithMany(o => o.Detalles)
-        .HasForeignKey(d => d.NumeroDeOrden)
+        .HasForeignKey(d => d.OrdenDeCompraId)
         .OnDelete(DeleteBehavior.Cascade);
 
     // OrdenDeCompraDetalle → Product
@@ -81,7 +81,7 @@ public class AppDbContext : DbContext
     modelBuilder.Entity<Recepcion>()
         .HasOne(r => r.Contenedor)
         .WithOne(c => c.Recepcion)
-        .HasForeignKey<Recepcion>(r => r.NumeroContenedor)
+        .HasForeignKey<Recepcion>(r => r.ContenedorId)
         .OnDelete(DeleteBehavior.Restrict);
 
     // Recepcion → OperadorQC
