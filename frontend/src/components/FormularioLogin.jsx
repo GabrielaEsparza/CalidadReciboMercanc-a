@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { autenticar } from '../services/authentication'; // Ajusta la ruta a donde guardaste el 'export const autenticar'
 
 
   // 1. Asegúrate de poner "onLoginSuccess" aquí arriba entre las llaves del componente:
@@ -7,19 +8,29 @@ function FormularioLogin({ onLoginSuccess }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const iniciarSesion = (e) => {
+  // 1. Añadimos 'async' para poder esperar la respuesta de la red
+  const iniciarSesion = async (e) => {
     e.preventDefault();
-    console.log({ username, password });
     
-    if (username === "admin" && password === "admin123") {
-      // 2. Quitamos el window.location viejo y llamamos a la función de éxito:
-      onLoginSuccess(); 
-    } else {
-      alert("Usuario o contraseña incorrectos");
+    try {
+      const datosAutenticacion = await autenticar(username, password);
+      
+      if (datosAutenticacion && datosAutenticacion.exito) {
+        
+        localStorage.setItem("token", datosAutenticacion.token);
+        
+        onLoginSuccess(); 
+      } else {
+        console.error(datosAutenticacion.mensaje || "Usuario o contraseña incorrectos");
+      }
+
+    } catch (error) {
+      console.error("Fallo el inicio de sesión:", error);
+      console.error("Usuario o contraseña incorrectos o error de servidor");
     }
   };
 
-  // ... (todo lo demás de tu return se queda exactamente igual)
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center"

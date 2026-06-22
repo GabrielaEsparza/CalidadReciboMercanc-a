@@ -16,7 +16,7 @@ function Inicio() {
   useEffect(() => {
     getRecepciones()
       .then(data => setRecepciones(data))
-      .catch(err => alert("No se pudieron cargar los datos de la API"));
+      .catch(err => console.log("No se pudieron cargar los datos de la API"));
   }, []);
 
   return (

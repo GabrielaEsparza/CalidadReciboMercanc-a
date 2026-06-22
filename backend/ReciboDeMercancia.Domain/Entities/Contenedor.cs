@@ -11,4 +11,4 @@ public class Contenedor
     public ICollection<OrdenDeCompra> OrdenesDeCompra { get; set; } = new List<OrdenDeCompra>();
     public Recepcion? Recepcion { get; set; }
 
-}
+}//Contenedor
