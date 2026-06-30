@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ReciboDeMercancia.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ReciboDeMercancia.Infrastructure.Data;
 namespace ReciboDeMercancia.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260625223653_AjusteRecepcionIncidencia")]
+    partial class AjusteRecepcionIncidencia
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -85,7 +88,7 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ArriboDetalleId")
+                    b.Property<int>("ArriboDetalleId")
                         .HasColumnType("int");
 
                     b.Property<string>("EvidenciaFoto")
@@ -113,6 +116,8 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                     b.HasIndex("ArriboDetalleId");
 
                     b.HasIndex("RecepcionId");
+
+                    b.HasIndex("SkuProducto");
 
                     b.ToTable("incidencias", (string)null);
                 });
@@ -185,6 +190,9 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                     b.Property<DateTime>("FechaYHoraLlegada")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("FechaYHoraSalida")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<int>("OperadorId")
                         .HasColumnType("int");
 
@@ -195,31 +203,6 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                     b.HasIndex("OperadorId");
 
                     b.ToTable("recepciones", (string)null);
-                });
-
-            modelBuilder.Entity("ReciboDeMercancia.Domain.Entities.RecepcionDetalle", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CantidadRecibida")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RecepcionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SkuProducto")
-                        .IsRequired()
-                        .HasColumnType("varchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RecepcionId");
-
-                    b.ToTable("recepciones_detalle", (string)null);
                 });
 
             modelBuilder.Entity("ReciboDeMercancia.Domain.Entities.ArriboDetalle", b =>
@@ -246,7 +229,8 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                     b.HasOne("ReciboDeMercancia.Domain.Entities.ArriboDetalle", "ArriboDetalle")
                         .WithMany()
                         .HasForeignKey("ArriboDetalleId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("ReciboDeMercancia.Domain.Entities.Recepcion", "Recepcion")
                         .WithMany("Incidencias")
@@ -254,7 +238,15 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ReciboDeMercancia.Domain.Entities.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("SkuProducto")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("ArriboDetalle");
+
+                    b.Navigation("Producto");
 
                     b.Navigation("Recepcion");
                 });
@@ -278,17 +270,6 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
                     b.Navigation("Operador");
                 });
 
-            modelBuilder.Entity("ReciboDeMercancia.Domain.Entities.RecepcionDetalle", b =>
-                {
-                    b.HasOne("ReciboDeMercancia.Domain.Entities.Recepcion", "Recepcion")
-                        .WithMany("Detalles")
-                        .HasForeignKey("RecepcionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Recepcion");
-                });
-
             modelBuilder.Entity("ReciboDeMercancia.Domain.Entities.Arribo", b =>
                 {
                     b.Navigation("Detalles");
@@ -296,8 +277,6 @@ namespace ReciboDeMercancia.Infrastructure.Migrations
 
             modelBuilder.Entity("ReciboDeMercancia.Domain.Entities.Recepcion", b =>
                 {
-                    b.Navigation("Detalles");
-
                     b.Navigation("Incidencias");
                 });
 #pragma warning restore 612, 618

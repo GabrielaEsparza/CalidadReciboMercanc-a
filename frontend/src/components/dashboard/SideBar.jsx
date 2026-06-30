@@ -6,7 +6,6 @@ function Sidebar({ colapsado, setColapsado }) {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '🎛️' },
-    { id: 'reportes', label: 'Reportes', icon: '📊' }
   ];
 
   return (

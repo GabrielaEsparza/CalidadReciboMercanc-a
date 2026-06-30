@@ -22,6 +22,27 @@ public class AuthService : IAuthService
         _configuration = configuration;
     }
 
+    public async Task<AuthResponse> UpdatePerfilAsync(string nombreActual, UpdatePerfilRequest request)
+    {
+        var operador = await _context.Operadores.FirstOrDefaultAsync(o => o.Name == nombreActual);
+        if (operador == null)
+            return new AuthResponse { Exito = false, Mensaje = "Usuario no encontrado." };
+
+        if (!_passwordService.VerifyPassword(request.PasswordActual, operador.Password))
+            return new AuthResponse { Exito = false, Mensaje = "Contraseña actual incorrecta." };
+
+        if (!string.IsNullOrWhiteSpace(request.NuevoNombre))
+            operador.Name = request.NuevoNombre;
+
+        if (!string.IsNullOrWhiteSpace(request.NuevaPassword))
+            operador.Password = _passwordService.HashPassword(request.NuevaPassword);
+
+        await _context.SaveChangesAsync();
+
+        var nuevoToken = GenerarJwtToken(operador.Name, operador.Rol);
+        return new AuthResponse { Exito = true, Token = nuevoToken, Mensaje = "Perfil actualizado correctamente." };
+    }
+
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
         // LOG DE CONTROL

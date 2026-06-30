@@ -1,5 +1,5 @@
 ### Obtener todas  
-GET http://localhost:5000/api/importacion/tablas_local
+GET http://localhost:5000/api/importacion/tablas_local/MRKU5809157
 
 ### Obtener orden por ID
 GET http://localhost:5000/entradas
@@ -10,3 +10,44 @@ POST http://localhost:5000/importar_registro_erp
 
 ###
 POST http://localhost:5000/poblar_catalogo_productos
+
+
+
+
+###
+GET http://localhost:5000/api/importacion/tablas_local/buscar?ordenCompra=2635
+
+
+
+###
+GET http://localhost:5000/api/arribos/headers
+###
+
+GET http://localhost:5000/api/erp/tablas
+
+###
+GET http://localhost:5000/api/erp/compras
+
+###
+GET http://localhost:5000/api/erp/compras?limit=100&filtroMovimiento=Entrada%20Importacion
+
+
+### Debug art
+GET http://localhost:5000/debug_art
+
+
+###
+GET http://localhost:5000/api/arribos/contenedor/PCIU9474799
+
+
+###
+POST http://localhost:5000/api/arribos/importar
+
+###
+POST http://localhost:5000/poblar_catalogo_productos
+
+
+
+###
+
+GET http://localhost:5000/api/arribos/

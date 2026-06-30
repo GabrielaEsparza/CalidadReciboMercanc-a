@@ -18,8 +18,8 @@ function FormularioLogin({ onLoginSuccess }) {
       if (datosAutenticacion && datosAutenticacion.exito) {
         
         localStorage.setItem("token", datosAutenticacion.token);
-        
-        onLoginSuccess(); 
+
+        onLoginSuccess(datosAutenticacion.token);
       } else {
         console.error(datosAutenticacion.mensaje || "Usuario o contraseña incorrectos");
       }

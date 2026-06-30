@@ -19,6 +19,15 @@ public class ImportacionController : ControllerBase
     public async Task<IActionResult> GetTablasLocal()
     {
         var resultado = await _importacionService.ObtenerTablasLocalAsync();
-        return Ok(resultado); // Reemplaza al Results.Ok()
+        return Ok(resultado);
+    }
+
+    [HttpGet("tablas_local/buscar")]
+    public async Task<IActionResult> GetPorFiltros([FromQuery] string? contenedor, [FromQuery] string? po)
+    {
+        var resultado = await _importacionService.ObtenerPorFiltrosAsync(contenedor, po);
+        if (resultado is null)
+            return NotFound();
+        return Ok(resultado);
     }
 }

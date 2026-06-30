@@ -1,11 +1,10 @@
 namespace ReciboDeMercancia.Domain.Entities;
 
-public class Product
+public class Producto
 {
-    public int Id { get; set; }
     public string Sku { get; set; } = string.Empty;
-    public int Upc { get; set; }
     public string Name { get; set; } = string.Empty;
+    public long Upc { get; set; }
     public decimal? AltoProducto { get; set; }
     public decimal? AnchoProducto { get; set; }
     public decimal? LargoProducto { get; set; }

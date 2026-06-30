@@ -4,7 +4,7 @@ using DotNetEnv;
 using ReciboDeMercancia.Application.Services;
 using ReciboDeMercancia.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using MySql.Data.MySqlClient; 
+using MySql.Data.MySqlClient;
 
 DotNetEnv.Env.Load("./env");
 
@@ -235,13 +235,20 @@ app.MapPost("/poblar_catalogo_productos", async () =>
         using var localConn = new MySqlConnection(localConnStr);
         await localConn.OpenAsync();
 
-        // El 'INSERT IGNORE' asegura que si un SKU ya existía, no rompa el proceso
-        var sqlInsertIgnore = """
-            INSERT IGNORE INTO products (Sku, Upc, Name, AltoProducto, AnchoProducto, LargoProducto, Peso)
-            VALUES (@Sku, @Upc, @Name, @AltoProducto, @AnchoProducto, @LargoProducto, @Peso);
+
+        var sqlInsert = """
+            INSERT INTO productos (Sku, Upc, Name, AltoProducto, AnchoProducto, LargoProducto, Peso)
+            VALUES (@Sku, @Upc, @Name, @AltoProducto, @AnchoProducto, @LargoProducto, @Peso)
+            ON DUPLICATE KEY UPDATE
+                Name = VALUES(Name),
+                Upc = VALUES(Upc),
+                AltoProducto = VALUES(AltoProducto),
+                AnchoProducto = VALUES(AnchoProducto),
+                LargoProducto = VALUES(LargoProducto),
+                Peso = VALUES(Peso);
         """;
 
-        int filasAfectadas = await localConn.ExecuteAsync(sqlInsertIgnore, listaMapeada);
+        int filasAfectadas = await localConn.ExecuteAsync(sqlInsert, listaMapeada);
 
         return Results.Ok(new 
         { 
@@ -257,191 +264,40 @@ app.MapPost("/poblar_catalogo_productos", async () =>
 });
 
 
-app.MapPost("/importar_registro_erp", async () =>
+// OBSOLETO: importar_registro_erp eliminado. Arriobos se nutren del Excel.
+
+
+
+// Endpoint temporal: verificar columnas e IDs de tabla art del ERP
+app.MapGet("/debug_art", async () =>
 {
-    var erpConnStr = $"Driver={{SQL Server}};" +
-                     $"Server={Environment.GetEnvironmentVariable("ERP_HOST")};" +
-                     $"Database={Environment.GetEnvironmentVariable("ERP_NAME")};" +
-                     $"UID={Environment.GetEnvironmentVariable("ERP_USER")};" +
-                     $"PWD={Environment.GetEnvironmentVariable("ERP_PASSWORD")};" +
-                     $"Timeout=10;";
-
-    var localConnStr = $"Server={Environment.GetEnvironmentVariable("DB_HOST")};" +
-                       $"Database=recibo_mercancia_db;" +
-                       $"User ID={Environment.GetEnvironmentVariable("DB_USER")};" +
-                       $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
-                       $"Port=3306;";
-
-    var sqlExtract = """
-        SELECT 
-            c.id, c.mov, c.movid, c.Referencia, c.Estatus, c.Situacion,
-            c.proveedor, p.Nombre as CFDIRetBeneficiarioNombre,
-            CAST(C.FechaEmision AS DATE) as Fecha,
-            CD.Articulo, a.Descripcion1 as Descripcion,
-            CD.Cantidad, c.origen, c.origenid,
-            a.AltoPieza, a.AnchoPieza, a.LargoPieza, a.PesoPieza, a.ISBN as upc
-        FROM compra c
-        LEFT JOIN comprad cd ON c.id = cd.ID
-        LEFT JOIN Prov p ON c.proveedor = p.proveedor
-        LEFT JOIN art a ON cd.articulo = a.Articulo
-        WHERE c.mov IN ('Entrada Importacion')
-        AND YEAR(C.FechaEmision) >= 2025
-        AND c.Estatus NOT IN ('SINAFECTAR')
-    """;
-
+    var connStr =
+        $"Driver={{SQL Server}};" +
+        $"Server={Environment.GetEnvironmentVariable("ERP_HOST")};" +
+        $"Database={Environment.GetEnvironmentVariable("ERP_NAME")};" +
+        $"UID={Environment.GetEnvironmentVariable("ERP_USER")};" +
+        $"PWD={Environment.GetEnvironmentVariable("ERP_PASSWORD")};" +
+        $"Timeout=10;";
     try
     {
-        using var erpConn = new OdbcConnection(erpConnStr);
-        var registrosErp = (await erpConn.QueryAsync<dynamic>(sqlExtract)).ToList();
+        using var conn = new OdbcConnection(connStr);
 
-        if (!registrosErp.Any())
-        {
-            return Results.Json(new { error = "No se encontraron registros en el ERP." }, statusCode: 404);
-        }
+        // Columnas de la tabla art
+        var columnas = (await conn.QueryAsync<string>(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'art' ORDER BY ORDINAL_POSITION;"
+        )).ToList();
 
-        // Agrupamos los registros por Orden de Compra (movid)
-        var ordenesAgrupadas = registrosErp
-            .GroupBy(r => (string)r.movid)
-            .ToList();
+        // Muestra de 5 registros con todos sus campos de identidad
+        var muestra = (await conn.QueryAsync<dynamic>(
+            "SELECT TOP 5 * FROM art WHERE Rama = 'PRODUCTO';"
+        )).ToList();
 
-        using var localConn = new MySqlConnection(localConnStr);
-        await localConn.OpenAsync();
-
-        var columnasContenedores = (await localConn.QueryAsync<dynamic>("DESCRIBE contenedores;"))
-                                    .Select(c => (string)c.Field.ToString().ToLower())
-                                    .ToList();
-
-        int totalCabecerasImportadas = 0;
-
-        using var transaccion = await localConn.BeginTransactionAsync();
-        try
-        {
-            // CORREGIDO: Se cambió 'en' por 'in'
-            foreach (var grupo in ordenesAgrupadas)
-            {
-                var primeraFila = grupo.First();
-                
-                string situacion = (string)primeraFila.Situacion ?? "PENDIENTE"; 
-                string proveedor = (string)primeraFila.CFDIRetBeneficiarioNombre ?? "Proveedor Desconocido";
-                string numeroContenedor = (string)primeraFila.Referencia ?? "SIN_CONTENEDOR";
-                string ordenCompra = (string)grupo.Key ?? (string)primeraFila.origenid ?? "SIN_ORDEN";
-
-                DateTime fechaParseada = DateTime.Parse(primeraFila.Fecha.ToString());
-                string fechaFormateada = fechaParseada.ToString("yyyy-MM-dd");
-
-                // 1. Inserción de un único Contenedor por grupo
-                var camposValidos = new List<string> { "numerocontenedor" };
-                var valoresValidos = new List<string> { "@NumeroContenedor" };
-                if (columnasContenedores.Contains("proveedor")) { camposValidos.Add("proveedor"); valoresValidos.Add("@Proveedor"); }
-                if (columnasContenedores.Contains("ordencompra")) { camposValidos.Add("ordencompra"); valoresValidos.Add("@OrdenCompra"); }
-                if (columnasContenedores.Contains("fecha")) { camposValidos.Add("fecha"); valoresValidos.Add("@Fecha"); }
-                if (columnasContenedores.Contains("situacion")) { camposValidos.Add("situacion"); valoresValidos.Add("@Situacion"); }
-
-                var sqlContenedor = $@"
-                    INSERT IGNORE INTO contenedores ({string.Join(", ", camposValidos)}) 
-                    VALUES ({string.Join(", ", valoresValidos)});";
-
-                await localConn.ExecuteAsync(sqlContenedor, new {
-                    NumeroContenedor = numeroContenedor,
-                    Proveedor = proveedor,
-                    OrdenCompra = ordenCompra,
-                    Situacion = situacion,
-                    Fecha = fechaFormateada
-                }, transaction: transaccion);
-
-                // 2. Inserción de UNA SOLA Cabecera por grupo
-                var sqlEntrada = """
-                    INSERT INTO entradasdeimportacion (Situacion, Estatus, Proveedor, OrdenCompra, Usuario, Fecha, NumeroContenedor)
-                    VALUES (@Situacion, @Estatus, @Proveedor, @OrdenCompra, @Usuario, @Fecha, @NumeroContenedor);
-                    SELECT LAST_INSERT_ID();
-                """;
-
-                int entradaId = await localConn.ExecuteScalarAsync<int>(sqlEntrada, new {
-                    Situacion = situacion,
-                    Estatus = "AFECTADO", 
-                    Proveedor = proveedor,
-                    OrdenCompra = ordenCompra,
-                    Usuario = "SYSTEM", 
-                    Fecha = fechaFormateada,
-                    NumeroContenedor = numeroContenedor
-                }, transaction: transaccion);
-
-                // 3. Iteramos exclusivamente sobre los artículos del grupo actual
-                foreach (var articuloRow in grupo)
-                {
-                    string skuDelErp = (string)articuloRow.Articulo ?? "SIN_SKU";
-
-                    var productoIdLocal = await localConn.ExecuteScalarAsync<int?>(
-                        "SELECT Id FROM products WHERE Sku = @Sku LIMIT 1;",
-                        new { Sku = skuDelErp },
-                        transaction: transaccion
-                    );
-                    // Si por alguna razón el SKU no se encontró, lo insertamos en caliente (Dropper integrado)
-                    if (productoIdLocal == null || productoIdLocal == 0)
-                    {
-                        long upcNumerico = 0;
-                        if (articuloRow.upc != null)
-                        {
-                            // Intentamos un parseo seguro. Si tiene letras o desborda, no tronará y guardará 0
-                            string upcString = articuloRow.upc.ToString().Trim();
-                            
-                            // Si el valor supera los límites normales de un número de 64 bits, lo protegemos
-                            if (!long.TryParse(upcString, out upcNumerico))
-                            {
-                                upcNumerico = 0; // Valor por defecto seguro para evitar el 'Out of range'
-                            }
-                        }
-
-                        var sqlNuevoProducto = """
-                            INSERT INTO products (Sku, Upc, Name, AltoProducto, AnchoProducto, LargoProducto, Peso)
-                            VALUES (@Sku, @Upc, @Name, @AltoProducto, @AnchoProducto, @LargoProducto, @Peso);
-                            SELECT LAST_INSERT_ID();
-                        """;
-
-                        productoIdLocal = await localConn.ExecuteScalarAsync<int>(sqlNuevoProducto, new {
-                            Sku = skuDelErp,
-                            Upc = upcNumerico, // Enviamos el número sanitizado
-                            Name = (string)articuloRow.Descripcion ?? "Sin descripción",
-                            AltoProducto = articuloRow.AltoPieza != null ? Convert.ToDecimal(articuloRow.AltoPieza) : (decimal?)null,
-                            AnchoProducto = articuloRow.AnchoPieza != null ? Convert.ToDecimal(articuloRow.AnchoPieza) : (decimal?)null,
-                            LargoProducto = articuloRow.LargoPieza != null ? Convert.ToDecimal(articuloRow.LargoPieza) : (decimal?)null,
-                            Peso = articuloRow.PesoPieza != null ? Convert.ToDecimal(articuloRow.PesoPieza) : 0.0m
-                        }, transaction: transaccion);
-                    }
-
-
-                    var sqlDetalle = """
-                        INSERT INTO entradasdeimportaciondetalles (Cantidad, EntradaDeImportacionId, ProductId)
-                        VALUES (@Cantidad, @EntradaDeImportacionId, @ProductId);
-                    """;
-
-                    await localConn.ExecuteAsync(sqlDetalle, new {
-                        Cantidad = articuloRow.Cantidad != null ? Convert.ToInt32(articuloRow.Cantidad) : 0,
-                        EntradaDeImportacionId = entradaId,
-                        ProductId = productoIdLocal.Value 
-                    }, transaction: transaccion);
-                }
-                
-                totalCabecerasImportadas++;
-            }
-
-            await transaccion.CommitAsync();
-            return Results.Ok(new { mensaje = "Importación masiva agrupada con éxito", totalOrdenesUnicas = totalCabecerasImportadas });
-        }
-        catch (Exception ex)
-        {
-            await transaccion.RollbackAsync();
-            Console.WriteLine($"❌ ERROR CRÍTICO EN EL BUCLE: {ex.Message} -> {ex.InnerException?.Message}");
-
-            return Results.Json(new { error = $"Error durante la ejecución en bucle: {ex.Message}" }, statusCode: 500);
-        }
+        return Results.Ok(new { columnas, muestra });
     }
     catch (Exception ex)
     {
-        return Results.Json(new { error = $"Error crítico de infraestructura: {ex.Message}" }, statusCode: 500);
+        return Results.Json(new { error = ex.Message }, statusCode: 500);
     }
 });
-
-
 
 app.Run();
